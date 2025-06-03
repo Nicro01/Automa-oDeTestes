@@ -53,3 +53,10 @@ jobs:
             tests/log.html
             tests/report.html
             tests/output.xml
+      - name: Exibir mensagem de sucesso
+        if: success()
+        run: echo "✅ Todos os testes passaram com sucesso!"
+
+      - name: Exibir mensagem de falha
+        if: failure()
+        run: echo "❌ Um ou mais testes falharam. Verifique os relatórios em log.html ou report.html"
