@@ -1,4 +1,4 @@
-name: Executar Testes Robot
+name: Testes Robot Framework
 
 on:
   push:
@@ -11,42 +11,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do código
+      - name: Clonar repositório
         uses: actions/checkout@v3
 
-      - name: Configurar Python
+      - name: Instalar Python e dependências
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
-      - name: Instalar dependências
+      - name: Instalar dependências com pip
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Instalar navegador e driver
+      - name: Instalar Google Chrome
         run: |
           sudo apt update
-          sudo apt install -y wget unzip xvfb libnss3
+          sudo apt install -y wget gnupg
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome*.deb || sudo apt -f install -y
-          wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/137.0.7151.55/linux64/chromedriver-linux64.zip
-          unzip chromedriver-linux64.zip
-          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
-          chmod +x /usr/local/bin/chromedriver
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb
+          google-chrome --version
 
-      - name: Executar testes com Xvfb (modo headless)
+      - name: Baixar WebDriver (ChromeDriver)
         run: |
-          Xvfb :99 & export DISPLAY=:99
-          python3 -m http.server 8000 &
-          sleep 2
-          robot --variable LOGIN_PAGE:http://localhost:8000/index.html tests
+          sudo apt install -y chromium-chromedriver
+          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
 
-      - name: Salvar relatório
+      - name: Rodar servidor HTTP
+        run: |
+          nohup python3 -m http.server 8000 &
+
+      - name: Executar testes Robot Framework
+        run: |
+          robot tests/teste_login.robot
+
+      - name: Armazenar relatórios
         uses: actions/upload-artifact@v4
         with:
-          name: robot-report
+          name: relatorios-robot
           path: |
-            log.html
-            report.html
-            output.xml
+            tests/log.html
+            tests/report.html
+            tests/output.xml
